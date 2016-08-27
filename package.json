@@ -33,6 +33,7 @@
     "pi-spi": "^1.0.1",
     "pixels-apa102": "^1.1.0",
     "rainbow-pixels": "^5.0.0",
-    "worker-timer": "^1.1.0"
+    "worker-timer": "^1.1.0",
+    "ws": "^1.1.1"
   }
 }

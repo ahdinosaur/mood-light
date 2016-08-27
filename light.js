@@ -1,15 +1,16 @@
 const NdArray = require('ndarray')
 const workerTimer = require('worker-timer')
-const getFrame = require('pixels-apa102')
 const Value = require('@mmckegg/mutant/value')
 const Struct = require('@mmckegg/mutant/struct')
 const h = require('@mmckegg/mutant/html-element')
 const watch = require('@mmckegg/mutant/watch')
 
 const rainbow = require('./lib/rainbow')
+const hslToRgb = require('./lib/hsl-to-rgb')
 const Spi = require('./lib/spi')
+const Client = require('./lib/client')
 
-const stripLength = (60 * 6)
+const stripLength = (60 * 2)
 const rate = 100 // fps
 const spiOpts = {
   device: '/dev/spidev1.0',
@@ -17,6 +18,7 @@ const spiOpts = {
   dataMode: null,
   bitOrder: null
 }
+const wsUrl = 'ws://localhost:1337'
 
 var params = {
   speed: Value(0.5),
@@ -35,7 +37,7 @@ container.style.top = container.style.bottom = container.style.left = container.
 for (var i = 0; i < stripLength; i++) {
   var element = document.createElement('div')
   element.style.flex = '1'
-  element.style.backgroundColor = 'hsl(0,0%,0%)'
+  element.style.backgroundColor = 'rgb(0,0,0)'
   container.appendChild(element)
 }
 
@@ -67,9 +69,16 @@ document.body.appendChild(h('div', {
 
 var state = Strand(stripLength)
 
+var spi
 try {
-  var writeToSpi = Spi(spiOpts)
-  var supportsSpi = true
+  spi = Spi(spiOpts)
+} catch (err) {
+  console.error(err)
+}
+
+var client
+try {
+  client = Client(wsUrl)
 } catch (err) {
   console.error(err)
 }
@@ -82,18 +91,18 @@ function tick () {
 
   rainbow(params, t, state)
 
+  hslToRgb(state)
   preview(container, state)
 
-  if (supportsSpi) {
-    writeToSpi(getFrame(state))
-  }
+  if (spi) spi(state)
+  if (client) client(state)
 }
 
 workerTimer.setInterval(tick, 1000 / rate)
 
 function preview (container, state) {
   for (var i = 0; i < state.shape[0]; i++) {
-    const colorString = `hsl(${state.get(i, 0)*360}, ${state.get(i, 1)*100}%, ${state.get(i, 2)*100}%)`
+    const colorString = `rgb(${state.get(i, 0)}, ${state.get(i, 1)}, ${state.get(i, 2)})`
     container.childNodes[i].style.backgroundColor = colorString
   }
 }
