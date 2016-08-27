@@ -7,6 +7,7 @@ const watch = require('@mmckegg/mutant/watch')
 
 const rainbow = require('./lib/rainbow')
 const hslToRgb = require('./lib/hsl-to-rgb')
+const nightshift = require('./lib/nightshift')
 const Spi = require('./lib/spi')
 const Client = require('./lib/client')
 
@@ -24,7 +25,8 @@ var params = {
   speed: Value(0.5),
   step: Value(1 / stripLength),
   saturation: Value(0.9),
-  lightness: Value(0.5)
+  lightness: Value(0.5),
+  nightshift: Value(0.5)
 }
 
 window.params = params
@@ -63,7 +65,8 @@ document.body.appendChild(h('div', {
     Slider(params.speed, { title: 'Speed', max: 1 }),
     HueStepSlider(params.step, { title: 'Hue Step', max: 256 }),
     Slider(params.saturation, { title: 'Saturation', max: 1 }),
-    Slider(params.lightness, { title: 'Lightness', max: 1 })
+    Slider(params.lightness, { title: 'Lightness', max: 1 }),
+    Slider(params.nightshift, { title: 'Nightshift', max: 1 })
   ])
 ]))
 
@@ -92,6 +95,9 @@ function tick () {
   rainbow(params, t, state)
 
   hslToRgb(state)
+  const shift = params.nightshift()
+  nightshift(shift, state)
+
   preview(container, state)
 
   if (spi) spi(state)
