@@ -2,13 +2,17 @@
 
 mood light using electron and APA102C LEDs
 
+## install
+
 ```shell
-npm install --save mood-light
+git clone ahdinosaur/mood-light
+cd mood-light
+npm install
+npm run rebuild
+npm start
 ```
 
-## usage
-
-### `moodLight = require('mood-light')`
+to run this app on boot, see [ahdinosaur/boot-to-electron](https://github.com/ahdinosaur/boot-to-electron)
 
 ## license
 
