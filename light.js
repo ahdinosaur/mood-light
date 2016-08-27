@@ -39,17 +39,23 @@ for (var i = 0; i < stripLength; i++) {
   container.appendChild(element)
 }
 
+document.body.style.height = document.documentElement.style.height = '100%'
+document.body.style.margin = document.documentElement.style.margin = 0
+document.body.style.padding = document.documentElement.style.padding = 0
 document.body.appendChild(container)
 document.body.appendChild(h('div', {
   style: {
+    height: '100%',
     position: 'relative'
   }
 }, [
   h('div', {
     style: {
+      height: '100%',
       color: 'white',
       display: 'flex',
-      'flex-wrap': 'wrap'
+      'flex-direction': 'column',
+      'justify-content': 'center',
     }
   }, [
     Slider(params.speed, { title: 'Speed', max: 1 }),
@@ -97,7 +103,15 @@ function Strand (length) {
 }
 
 function Slider (obs, opts) {
-  return h('div', {}, [
+  return h('div', {
+    style: {
+      'flex-grow': 1,
+      display: 'flex',
+      'flex-direction': 'column',
+      'align-items': 'center',
+      padding: '1rem'
+    }
+  }, [
     h('strong', opts.title), h('br'),
     h('input', {
       type: 'range',
@@ -106,7 +120,11 @@ function Slider (obs, opts) {
       max: opts.max,
       hooks: [
         ValueHook(obs)
-      ]
+      ],
+      style: {
+        'flex-grow': 1,
+        width: '100%'
+      }
     })
   ])
 }
