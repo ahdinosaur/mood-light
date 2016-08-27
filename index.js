@@ -1,14 +1,22 @@
 const NdArray = require('ndarray')
 const workerTimer = require('worker-timer')
+const getFrame = require('pixels-apa102')
 const Value = require('@mmckegg/mutant/value')
 const Struct = require('@mmckegg/mutant/struct')
 const h = require('@mmckegg/mutant/html-element')
 const watch = require('@mmckegg/mutant/watch')
 
 const rainbow = require('./lib/rainbow')
+const Spi = require('./lib/spi')
 
 const stripLength = (60 * 6)
 const rate = 100 // fps
+const spiOpts = {
+  device: '/dev/spidev1.0',
+  clockSpeed: null,
+  dataMode: null,
+  bitOrder: null
+}
 
 var params = {
   speed: Value(0.5),
@@ -53,8 +61,14 @@ document.body.appendChild(h('div', {
 
 var state = Strand(stripLength)
 
-var t = 0
+try {
+  var writeToSpi = Spi(spiOpts)
+  var supportsSpi = true
+} catch (err) {
+  console.error(err)
+}
 
+var t = 0
 function tick () {
   const speed = params.speed()
   if (speed === 0) return
@@ -63,6 +77,10 @@ function tick () {
   rainbow(params, t, state)
 
   preview(container, state)
+
+  if (supportsSpi) {
+    writeToSpi(getFrame(state))
+  }
 }
 
 workerTimer.setInterval(tick, 1000 / rate)
