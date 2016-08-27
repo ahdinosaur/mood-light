@@ -11,6 +11,7 @@ const stripLength = (60 * 6)
 const rate = 100 // fps
 
 var params = {
+  speed: Value(0.5),
   step: Value(1 / stripLength),
   saturation: Value(0.9),
   lightness: Value(0.5)
@@ -43,6 +44,7 @@ document.body.appendChild(h('div', {
       'flex-wrap': 'wrap'
     }
   }, [
+    Slider(params.speed, { title: 'Speed', max: 1 }),
     HueStepSlider(params.step, { title: 'Hue Step', max: 256 }),
     Slider(params.saturation, { title: 'Saturation', max: 1 }),
     Slider(params.lightness, { title: 'Lightness', max: 1 })
@@ -54,7 +56,9 @@ var state = Strand(stripLength)
 var t = 0
 
 function tick () {
-  t += 0.001
+  const speed = params.speed()
+  if (speed === 0) return
+  t += (speed * speed) / 100
 
   rainbow(params, t, state)
 
