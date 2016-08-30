@@ -2,6 +2,8 @@
 
 mood light using electron and APA102C LEDs
 
+![light](./light.jpg)
+
 ## install
 
 ```shell
