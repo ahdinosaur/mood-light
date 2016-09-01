@@ -9,7 +9,7 @@ const rainbow = require('./lib/rainbow')
 const hslToRgb = require('./lib/hsl-to-rgb')
 const nightshift = require('./lib/nightshift')
 const Spi = require('./lib/spi')
-const Client = require('./lib/client')
+const Ws = require('./lib/ws')
 
 const stripLength = (60 * 2)
 const rate = 100 // fps
@@ -72,19 +72,9 @@ document.body.appendChild(h('div', {
 
 var state = Strand(stripLength)
 
-var spi
-try {
-  spi = Spi(spiOpts)
-} catch (err) {
-  console.error(err)
-}
+var spi = Spi(spiOpts)
 
-var client
-try {
-  client = Client(wsUrl)
-} catch (err) {
-  console.error(err)
-}
+var ws = Ws(wsUrl)
 
 var t = 0
 function tick () {
@@ -100,15 +90,15 @@ function tick () {
 
   preview(container, state)
 
-  if (spi) spi(state)
-  if (client) client(state)
+  spi(state)
+  ws(state)
 }
 
 workerTimer.setInterval(tick, 1000 / rate)
 
 function preview (container, state) {
   for (var i = 0; i < state.shape[0]; i++) {
-    const colorString = `rgb(${state.get(i, 0)}, ${state.get(i, 1)}, ${state.get(i, 2)})`
+    const colorString = `rgb(${Math.round(state.get(i, 0), 2)}, ${Math.round(state.get(i, 1), 2)}, ${Math.round(state.get(i, 2), 2)})`
     container.childNodes[i].style.backgroundColor = colorString
   }
 }
