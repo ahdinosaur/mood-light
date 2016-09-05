@@ -5,7 +5,7 @@
   "description": "mood light using electron and APA102C LEDs",
   "main": "index.js",
   "scripts": {
-    "rebuild": "electron-rebuild",
+    "rebuild": "electron-rebuild -e node_modules/electron",
     "start": "electron ."
   },
   "repository": {
