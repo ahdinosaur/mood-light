@@ -4,7 +4,9 @@ const Value = require('@mmckegg/mutant/value')
 const Struct = require('@mmckegg/mutant/struct')
 const h = require('@mmckegg/mutant/html-element')
 const watch = require('@mmckegg/mutant/watch')
+const computed = require('@mmckegg/mutant/computed')
 
+const LogValue = require('./lib/log-value')
 const rainbow = require('./lib/rainbow')
 const hslToRgb = require('./lib/hsl-to-rgb')
 const nightshift = require('./lib/nightshift')
@@ -23,7 +25,7 @@ const wsUrl = 'ws://localhost:1337'
 
 var params = {
   speed: Value(0.5),
-  step: Value(1 / stripLength),
+  step: Value(0),
   saturation: Value(0.9),
   lightness: Value(0.5),
   nightshift: Value(0.5)
@@ -62,11 +64,33 @@ document.body.appendChild(h('div', {
       'justify-content': 'center',
     }
   }, [
-    Slider(params.speed, { title: 'Speed', max: 1 }),
-    HueStepSlider(params.step, { title: 'Hue Step', max: 256 }),
-    Slider(params.saturation, { title: 'Saturation', max: 1 }),
-    Slider(params.lightness, { title: 'Lightness', max: 1 }),
-    Slider(params.nightshift, { title: 'Nightshift', max: 1 })
+    Slider(params.speed, { title: 'Speed', maxInput: 1 }),
+    //HueStepSlider(params.step, { title: 'Hue Step', maxInput: 256 }),
+    CustomSlider(params.step, {
+      title: 'Hue Step',
+      map: (options) => {
+        const logValue = LogValue(options)
+        return p => 1 / (stripLength * logValue(p))
+      },
+      minInput: 0,
+      maxInput: 1,
+      minOutput: 1,
+      maxOutput: 16
+    }),
+    Slider(params.saturation, { title: 'Saturation', maxInput: 1 }),
+    Slider(params.lightness, { title: 'Lightness', maxInput: 1 }),
+    CustomSlider(params.nightshift, {
+      title: 'Nightshift',
+      map: (options) => {
+        const logValue = LogValue(options)
+        const defaultP = logValue(params.nightshift())
+        return p => [defaultP, logValue(1 - p)]
+      },
+      minInput: 0,
+      maxInput: 1,
+      minOutput: 1e3,
+      maxOutput: 60e3
+    })
   ])
 ]))
 
@@ -86,7 +110,7 @@ function tick () {
 
   hslToRgb(state)
   const shift = params.nightshift()
-  nightshift(shift, state)
+  nightshift(shift[0], shift[1], state)
 
   preview(container, state)
 
@@ -107,6 +131,14 @@ function Strand (length) {
   return NdArray(new Float64Array(length * 3), [length, 3])
 }
 
+function CustomSlider (obs, options) {
+  const map = options.map(options)
+  const nextObs = Value(obs())
+  obs.set(map(obs()))
+  nextObs(value => obs.set(map(value)))
+  return Slider(nextObs, options)
+}
+
 function Slider (obs, opts) {
   return h('div', {
     style: {
@@ -120,9 +152,9 @@ function Slider (obs, opts) {
     h('strong', opts.title), h('br'),
     h('input', {
       type: 'range',
-      min: 0,
+      min: opts.minInput || 0,
       step: 0.01,
-      max: opts.max,
+      max: opts.maxInput || 1,
       hooks: [
         ValueHook(obs)
       ],
@@ -132,21 +164,6 @@ function Slider (obs, opts) {
       }
     })
   ])
-}
-
-function HueStepSlider (obs, opts) {
-  var logObs = Value(0)
-
-  logObs(function (value) {
-    obs.set(getValue(value))
-  })
-
-  return Slider(logObs, opts)
-
-  function getValue (value) {
-    const op = (1 + Math.log(opts.max * opts.max) - Math.log((opts.max - value) * opts.max + 1))
-    return 1 / (stripLength * op)
-  }
 }
 
 function ValueHook (obs) {
